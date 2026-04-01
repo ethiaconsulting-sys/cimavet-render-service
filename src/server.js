@@ -72,7 +72,16 @@ app.post("/jobs/run", requireSecret, async (req, res) => {
           .from("ctrl_cimavet_trabajos")
           .update({ estado_carga_db: "abortado", chunks_error: 1 })
           .eq("id_trabajo", jobId);
-        console.error(JSON.stringify({ level: "error", jobId, error: error instanceof Error ? error.message : String(error) }));
+        console.error(JSON.stringify({
+          level: "error",
+          jobId,
+          message: error?.message ?? null,
+          details: error?.details ?? null,
+          hint: error?.hint ?? null,
+          code: error?.code ?? null,
+          stack: error?.stack ?? null,
+          raw: error
+        }, null, 2));
       })
       .finally(() => {
         runningJobs.delete(jobId);

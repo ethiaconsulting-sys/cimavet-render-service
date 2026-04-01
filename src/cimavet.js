@@ -608,7 +608,6 @@ export async function runCimavetJob(jobId, input = {}) {
 
     return summary;
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
     try {
       await updateJob(supabase, jobId, {
         estado_carga_diccionarios: "abortado",
@@ -618,7 +617,16 @@ export async function runCimavetJob(jobId, input = {}) {
     } catch {
       // noop
     }
-    throw new Error(message);
+    if (error instanceof Error) {
+      throw error;
+    }
+    const wrapped = new Error(String(error?.message ?? error));
+    if (error && typeof error === "object") {
+      wrapped.details = error.details ?? null;
+      wrapped.hint = error.hint ?? null;
+      wrapped.code = error.code ?? null;
+    }
+    throw wrapped;
   } finally {
     await fs.promises.rm(tempDir, { recursive: true, force: true });
   }
