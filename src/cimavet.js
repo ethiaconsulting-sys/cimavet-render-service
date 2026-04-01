@@ -273,6 +273,23 @@ async function processPrescriptionsStream(supabase, entry, options, progress) {
     processed += result.processed;
     chunksProcessed += 1;
     lastCodNacions = result.codNacions;
+    console.log(JSON.stringify({
+  tag: "cimavet_flush_counts",
+  chunk_number: chunksProcessed + 1,
+  main_rows: payload.main_rows.length,
+  atc_rows: payload.atc_rows.length,
+  via_rows: payload.via_rows.length,
+  principi_rows: payload.principi_rows.length,
+  especie_rows: payload.especie_rows.length,
+  caducidad_rows: payload.caducidad_rows.length,
+  indicacio_rows: payload.indicacio_rows.length,
+  contra_rows: payload.contra_rows.length,
+  interaccio_rows: payload.interaccio_rows.length,
+  reaccio_rows: payload.reaccio_rows.length,
+  espera_rows: payload.espera_rows.length,
+  dosi_rows: payload.dosi_rows.length
+}));
+
     clearPayload(payload);
 
     if (progress) {
@@ -482,6 +499,25 @@ async function processPrescriptionsStream(supabase, entry, options, progress) {
   while ((element = extractNext()) !== null) {
     await handlePrescription(element);
   }
+
+  console.log(JSON.stringify({
+  tag: "cimavet_final_payload_counts",
+  main_rows: payload.main_rows.length,
+  atc_rows: payload.atc_rows.length,
+  via_rows: payload.via_rows.length,
+  principi_rows: payload.principi_rows.length,
+  especie_rows: payload.especie_rows.length,
+  caducidad_rows: payload.caducidad_rows.length,
+  indicacio_rows: payload.indicacio_rows.length,
+  contra_rows: payload.contra_rows.length,
+  interaccio_rows: payload.interaccio_rows.length,
+  reaccio_rows: payload.reaccio_rows.length,
+  espera_rows: payload.espera_rows.length,
+  dosi_rows: payload.dosi_rows.length,
+  seen,
+  processed_so_far: processed,
+  chunks_processed: chunksProcessed
+}));
 
   await flushIfNeeded(true);
 
