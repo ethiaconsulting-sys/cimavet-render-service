@@ -93,13 +93,48 @@ function deduplicateByKey(rows, key) {
   });
 }
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isRetryableSupabaseError(error) {
+  const message = String(error?.message ?? error ?? "");
+  return (
+    message.includes("500 Internal Server Error") ||
+    message.includes("502 Bad Gateway") ||
+    message.includes("503 Service Temporarily Unavailable") ||
+    message.includes("504 Gateway Timeout") ||
+    message.includes("cloudflare")
+  );
+}
+
 async function upsertRows(supabase, table, rows, onConflict) {
   let total = 0;
   for (let i = 0; i < rows.length; i += UPSERT_BATCH_SIZE) {
     const chunk = rows.slice(i, i + UPSERT_BATCH_SIZE);
     if (!chunk.length) continue;
-    const { error } = await supabase.from(table).upsert(chunk, { onConflict });
-    if (error) throw new Error(`[${table}] ${error.message}`);
+    let lastError = null;
+    for (let attempt = 1; attempt <= 3; attempt += 1) {
+      const { error } = await supabase.from(table).upsert(chunk, { onConflict });
+      if (!error) {
+        lastError = null;
+        break;
+      }
+      lastError = error;
+      if (!isRetryableSupabaseError(error) || attempt === 3) {
+        break;
+      }
+      console.warn(JSON.stringify({
+        level: "warn",
+        tag: "supabase_upsert_retry",
+        table,
+        attempt,
+        batch_size: chunk.length,
+        message: error.message
+      }));
+      await sleep(1000 * attempt);
+    }
+    if (lastError) throw new Error(`[${table}] ${lastError.message}`);
     total += chunk.length;
   }
   return total;
@@ -110,8 +145,28 @@ async function insertRows(supabase, table, rows) {
   for (let i = 0; i < rows.length; i += UPSERT_BATCH_SIZE) {
     const chunk = rows.slice(i, i + UPSERT_BATCH_SIZE);
     if (!chunk.length) continue;
-    const { error } = await supabase.from(table).insert(chunk);
-    if (error) throw new Error(`[${table}] ${error.message}`);
+    let lastError = null;
+    for (let attempt = 1; attempt <= 3; attempt += 1) {
+      const { error } = await supabase.from(table).insert(chunk);
+      if (!error) {
+        lastError = null;
+        break;
+      }
+      lastError = error;
+      if (!isRetryableSupabaseError(error) || attempt === 3) {
+        break;
+      }
+      console.warn(JSON.stringify({
+        level: "warn",
+        tag: "supabase_insert_retry",
+        table,
+        attempt,
+        batch_size: chunk.length,
+        message: error.message
+      }));
+      await sleep(1000 * attempt);
+    }
+    if (lastError) throw new Error(`[${table}] ${lastError.message}`);
     total += chunk.length;
   }
   return total;

@@ -1,5 +1,5 @@
 export const DEFAULT_CIMAVET_ZIP_URL = "https://listadomedicamentos.aemps.gob.es/prescripcionVET.zip";
-export const UPSERT_BATCH_SIZE = 500;
+export const UPSERT_BATCH_SIZE = 100;
 export const DEFAULT_FLUSH_TRIGGER = 25;
 
 export const CIMAVET_DICT_CONFIG = {
