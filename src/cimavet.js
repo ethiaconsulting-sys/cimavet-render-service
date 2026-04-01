@@ -328,7 +328,7 @@ async function processPrescriptionsStream(supabase, entry, options, progress) {
       const forma = formaEls[0];
       const mainRow = payload.main_rows[payload.main_rows.length - 1];
       mainRow.ff_cod_forma_farmaceutica = getInt(forma, "cod_forma_farmaceutica");
-      mainRow.ff_cantidad_concentracion = getNumericString(forma, "cantidad_concentracion");
+      mainRow.ff_cantidad_concentracion = getVal(forma, "cantidad_concentracion");
       mainRow.ff_unidad_cantidad_concentracion = getInt(forma, "unidad_cantidad_concentracion");
 
       for (const via of extractElements(forma, "viasadministracion")) {
@@ -342,7 +342,7 @@ async function processPrescriptionsStream(supabase, entry, options, progress) {
           payload.principi_rows.push({
             cod_nacion: codNacion,
             cod_principio_activo: codPrincipio,
-            cantidad: getNumericString(principio, "cantidad"),
+            cantidad: getVal(principio, "cantidad"),
             cod_unidad_cantidad: getInt(principio, "cod_unidad_cantidad")
           });
         }
