@@ -209,6 +209,8 @@ function clearPayload(payload) {
   }
 }
 
+const DEBUG_TARGET_COD_NACIONS = new Set([585802, 585803]);
+
 async function downloadZipToTemp(zipUrl, jobId) {
   const response = await fetch(zipUrl);
   if (!response.ok || !response.body) {
@@ -324,6 +326,15 @@ async function processPrescriptionsStream(supabase, entry, options, progress) {
     if (!force && payload.main_rows.length < flushTrigger) return;
     if (!payload.main_rows.length) return;
 
+    const targetRows = payload.main_rows.filter((row) => DEBUG_TARGET_COD_NACIONS.has(row.cod_nacion));
+    if (targetRows.length > 0) {
+      console.log(JSON.stringify({
+        tag: "cimavet_target_before_upsert",
+        force,
+        rows: targetRows
+      }));
+    }
+
     const result = await applyPrescriptionChunk(supabase, payload);
     processed += result.processed;
     chunksProcessed += 1;
@@ -419,6 +430,15 @@ async function processPrescriptionsStream(supabase, entry, options, progress) {
           });
         }
       }
+    }
+
+    const targetMainRow = payload.main_rows[payload.main_rows.length - 1];
+    if (DEBUG_TARGET_COD_NACIONS.has(codNacion) && targetMainRow) {
+      console.log(JSON.stringify({
+        tag: "cimavet_target_mainrow",
+        cod_nacion: codNacion,
+        mainRow: targetMainRow
+      }));
     }
 
     for (const atc of extractElements(xml, "atcvet")) {
