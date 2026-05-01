@@ -1,0 +1,23 @@
+﻿# Secrets
+.env
+.env.local
+.env.production
+
+# Node
+node_modules/
+npm-debug.log
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Claude Code (secrets locals)
+.claude/settings.local.json
+
+# Supabase
+supabase/.temp/
+
+# Outputs i temporals
+archive/
+*.log
